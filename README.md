@@ -7,7 +7,7 @@ The repository has two intentionally separate deployment units:
 - `frontend/`: TanStack Start + React + TypeScript, deployed natively to Vercel (never containerized).
 - `backend/`: FastAPI intelligence, memory, and media modules, deployed as a lean Docker image to Render.
 
-Supabase provides PostgreSQL, authentication, and object storage. The root Compose stack is local-development infrastructure only.
+MongoDB Atlas is now the persistence target for founder, memo, and signal records. The root Compose stack is no longer used for the primary database workflow.
 
 ## Quick start
 
@@ -19,7 +19,7 @@ Supabase provides PostgreSQL, authentication, and object storage. The root Compo
    cp backend/.env.example backend/.env
    ```
 
-2. Start the local backend and Supabase-compatible services:
+2. Start the local backend and any optional supporting services:
 
    ```bash
    docker compose up --build
@@ -37,10 +37,9 @@ Local endpoints:
 
 - Frontend: `http://localhost:3000`
 - FastAPI/OpenAPI: `http://localhost:8080/docs`
-- Supabase API gateway: `http://localhost:8000`
-- PostgreSQL: `postgresql://postgres:postgres@localhost:54322/postgres`
+- MongoDB: `mongodb://localhost:27017`
 
-The Compose Supabase subset includes Auth, PostgREST, and Storage. It is intentionally small and is not suitable for production. For migration workflows against the full local platform, the committed `supabase/` directory also works with the Supabase CLI.
+The Compose stack no longer provisions the primary data plane. Configure `MONGODB_URI` and `MONGODB_DATABASE` for the backend to connect to Atlas or a local MongoDB instance.
 
 ## Development commands
 

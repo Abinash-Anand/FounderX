@@ -4,7 +4,7 @@ from elevenlabs.client import ElevenLabs
 
 from app.core.errors import IntegrationNotConfigured
 from app.core.settings import Settings, get_settings
-from app.integrations.supabase import SupabaseGateway, build_supabase_gateway
+from app.integrations.mongodb import MongoDBGateway, build_mongodb_gateway
 
 
 class MemoNarrator:
@@ -14,7 +14,7 @@ class MemoNarrator:
         self,
         *,
         elevenlabs: ElevenLabs,
-        storage: SupabaseGateway,
+        storage: MongoDBGateway,
         voice_id: str,
         model_id: str,
         bucket: str,
@@ -54,8 +54,8 @@ def build_memo_narrator(settings: Settings | None = None) -> MemoNarrator:
         )
     return MemoNarrator(
         elevenlabs=ElevenLabs(api_key=settings.elevenlabs_api_key.get_secret_value()),
-        storage=build_supabase_gateway(settings),
+        storage=build_mongodb_gateway(settings),
         voice_id=settings.elevenlabs_voice_id,
         model_id=settings.elevenlabs_model_id,
-        bucket=settings.supabase_memo_audio_bucket,
+        bucket=settings.mongodb_memo_audio_bucket,
     )

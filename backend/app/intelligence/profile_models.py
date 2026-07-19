@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, cast
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 from pydantic import Field as PydanticField
 
 
@@ -48,6 +48,8 @@ class ProfileModel(BaseModel):
 
 
 class Evidence(ProfileModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
     id: str = ""
     type: str = ""
     title: str = ""
@@ -57,6 +59,13 @@ class Evidence(ProfileModel):
     publishedAt: str = ""
     confidence: str = ""
     supports: list[str] = field(default_factory=list)
+    content: str = ""
+    excerpt: str = ""
+    quote: str = ""
+    sourceCategory: str = "Unknown"
+    publisherType: str = "Unknown"
+    contentType: str = "Unknown"
+    claimCategory: str = "Unknown"
 
 
 class ProfileMetadata(ProfileModel):
@@ -95,7 +104,7 @@ class Education(ProfileModel):
     grade: str = ""
     location: str = ""
     description: str = ""
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Experience(ProfileModel):
@@ -110,7 +119,7 @@ class Experience(ProfileModel):
     location: str = ""
     description: str = ""
     skillsUsed: list[str] = Field(default_factory=list)
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Skills(ProfileModel):
@@ -139,7 +148,7 @@ class Project(ProfileModel):
     endDate: str = ""
     status: str = ""
     teamSize: int = 0
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Repository(ProfileModel):
@@ -179,7 +188,7 @@ class StartupHistory(ProfileModel):
     description: str = ""
     website: str = ""
     funding: Funding = Field(default_factory=Funding)
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class ProductLaunch(ProfileModel):
@@ -191,7 +200,7 @@ class ProductLaunch(ProfileModel):
     productHunt: str = ""
     github: str = ""
     status: str = ""
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Research(ProfileModel):
@@ -203,7 +212,7 @@ class Research(ProfileModel):
     url: str = ""
     citations: int = 0
     keywords: list[str] = Field(default_factory=list)
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class PublicSpeaking(ProfileModel):
@@ -215,7 +224,7 @@ class PublicSpeaking(ProfileModel):
     video: str = ""
     slides: str = ""
     topic: str = ""
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Award(ProfileModel):
@@ -224,7 +233,7 @@ class Award(ProfileModel):
     organization: str = ""
     date: str = ""
     description: str = ""
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Grant(ProfileModel):
@@ -234,7 +243,7 @@ class Grant(ProfileModel):
     amount: str = ""
     date: str = ""
     description: str = ""
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Patent(ProfileModel):
@@ -244,7 +253,7 @@ class Patent(ProfileModel):
     status: str = ""
     date: str = ""
     url: str = ""
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class OpenSource(ProfileModel):
@@ -277,7 +286,7 @@ class CommunityItem(ProfileModel):
     episode: str = ""
     publication: str = ""
     guests: list[str] = Field(default_factory=list)
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Community(ProfileModel):
@@ -302,7 +311,7 @@ class TimelineEvent(ProfileModel):
     title: str = ""
     description: str = ""
     relatedEntity: str = ""
-    evidence: list[Evidence] = Field(default_factory=list)
+    evidenceIds: list[str] = Field(default_factory=list)
 
 
 class Entities(ProfileModel):
@@ -315,9 +324,14 @@ class Entities(ProfileModel):
 
 
 class Unknown(ProfileModel):
+    category: str = ""
     field: str = ""
     reason: str = ""
     importance: str = ""
+    priority: str = ""
+    recommendedAction: str = ""
+    entityType: str = ""
+    entityId: str = ""
 
 
 class FounderProfile(ProfileModel):
@@ -344,3 +358,19 @@ class FounderProfile(ProfileModel):
     entities: Entities = Field(default_factory=Entities)
     evidence: list[Evidence] = Field(default_factory=list)
     unknowns: list[Unknown] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_evidence_registry(cls, value: Any) -> Any:
+        if isinstance(value, dict):
+            from app.intelligence.evidence_registry import normalize_evidence_registry_payload
+
+            return normalize_evidence_registry_payload(value)
+        return value
+
+    @model_validator(mode="after")
+    def validate_evidence_registry(self) -> FounderProfile:
+        from app.intelligence.evidence_registry import validate_evidence_references
+
+        validate_evidence_references(self.model_dump(mode="python"))
+        return self

@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -19,6 +20,7 @@ from app.intelligence.search_planner import (
     SearchPlanningError,
     build_search_planner,
 )
+from app.persistence import build_persistence_orchestrator
 
 router = APIRouter()
 
@@ -29,6 +31,10 @@ class ResearchRequest(BaseModel):
 
 class ExtractionRequest(BaseModel):
     search_results: list[dict[str, Any]] = Field(min_length=1, max_length=50)
+
+
+class ResearchQueryResponse(Layer1Input):
+    researchRunId: str
 
 
 @router.post(
@@ -74,10 +80,21 @@ async def plan_vc_query(request: ResearchRequest) -> SearchPlan:
         503: {"description": "OpenAI or Tavily research integration is not configured."},
     },
 )
-async def research_vc_query(request: ResearchRequest) -> Layer1Input:
+async def research_vc_query(request: ResearchRequest) -> ResearchQueryResponse:
     try:
         agent = build_vc_research_agent()
-        return await agent.research(request.query)
+        payload = await agent.research(request.query)
+        persistence = build_persistence_orchestrator()
+        metadata = {
+            "query": request.query,
+            "source": "research-route",
+            "createdAt": datetime.now(UTC).isoformat(),
+        }
+        stored_run = persistence.save_research_run(payload, metadata)
+        return ResearchQueryResponse(
+            researchRunId=stored_run.researchRunId,
+            **payload.model_dump(mode="json"),
+        )
     except IntegrationNotConfigured as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     except ResearchAgentError as error:

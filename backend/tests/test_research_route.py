@@ -7,6 +7,7 @@ from app.intelligence.founder_extraction import (
 from app.intelligence.profile_models import Layer1Input
 from app.intelligence.search_planner import SearchPlan
 from app.main import create_app
+from app.persistence import PersistenceOrchestrator
 
 
 def test_search_plan_route_returns_focused_queries(monkeypatch) -> None:
@@ -82,6 +83,64 @@ def test_research_route_returns_layer1_payload(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert response.json()["tavily"]["claims"][0]["founder"] == "Ada Lovelace"
+
+
+def test_research_route_persists_research_run_and_returns_id(monkeypatch) -> None:
+    payload = Layer1Input.model_validate(
+        {"tavily": {"claims": [{"founder": "Ada Lovelace"}]}}
+    )
+
+    class FakeAgent:
+        async def research(self, query: str) -> Layer1Input:
+            assert query == "Find AI infrastructure founders"
+            return payload
+
+    class FakeGateway:
+        def __init__(self) -> None:
+            self.saved_documents: list[dict[str, object]] = []
+
+        def create_research_run(self, research_run, metadata):
+            document = research_run.model_dump(mode="json")
+            document.update(
+                {
+                    "researchRunId": "run-123",
+                    "rawResponses": [],
+                    "immutable": True,
+                    "metadata": metadata,
+                }
+            )
+            self.saved_documents.append(document)
+            return type(
+                "StoredResearchRun",
+                (),
+                {
+                    "researchRunId": "run-123",
+                    "payload": document,
+                    "rawResponses": [],
+                    "immutable": True,
+                },
+            )()
+
+    fake_gateway = FakeGateway()
+    monkeypatch.setattr(
+        "app.api.routes.research.build_vc_research_agent",
+        lambda: FakeAgent(),
+    )
+    monkeypatch.setattr(
+        "app.api.routes.research.build_persistence_orchestrator",
+        lambda: PersistenceOrchestrator(fake_gateway),
+    )
+
+    response = TestClient(create_app()).post(
+        "/v1/research/query",
+        json={"query": "Find AI infrastructure founders"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["researchRunId"] == "run-123"
+    assert response.json()["tavily"]["claims"][0]["founder"] == "Ada Lovelace"
+    assert fake_gateway.saved_documents[0]["immutable"] is True
+    assert fake_gateway.saved_documents[0]["rawResponses"] == []
 
 
 def test_research_route_returns_503_when_integrations_are_missing(monkeypatch) -> None:

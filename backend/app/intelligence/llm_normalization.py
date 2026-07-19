@@ -23,6 +23,8 @@ Rules:
 - Use empty strings, empty arrays, zero, or false when the schema requires a
   value but the source does not provide one.
 - Record important missing or uncertain information in `unknowns`.
+- Put each source-backed evidence object in the top-level `evidence` registry
+    exactly once and reference it from entities with `evidenceIds`.
 - Preserve source URLs and supporting evidence whenever they are available.
 - If sources disagree, preserve both claims with their separate evidence and
   record the conflict in `unknowns`; never silently choose a winner.
@@ -153,7 +155,7 @@ async def structure_founder_profile(
     )
     try:
         return FounderProfile.model_validate(response)
-    except ValidationError as error:
+    except (ValidationError, ValueError) as error:
         raise ProfileNormalizationError(
             "The LLM response did not match the FounderProfile schema."
         ) from error

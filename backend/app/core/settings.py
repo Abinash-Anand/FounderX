@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     port: int = 8000
     cors_origins: list[str] = ["http://localhost:3000"]
 
-    supabase_url: str | None = None
-    supabase_service_role_key: SecretStr | None = None
-    supabase_pitch_deck_bucket: str = "pitch-decks"
-    supabase_memo_audio_bucket: str = "investment-memos"
+    mongodb_uri: str | None = None
+    mongodb_database: str = "vc-brain"
+    mongodb_pitch_deck_bucket: str = "pitch-decks"
+    mongodb_memo_audio_bucket: str = "investment-memos"
 
     tavily_api_key: SecretStr | None = None
     elevenlabs_api_key: SecretStr | None = None

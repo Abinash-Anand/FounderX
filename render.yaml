@@ -11,10 +11,10 @@ services:
         value: production
       - key: PYTHONUNBUFFERED
         value: "1"
-      - key: SUPABASE_URL
+      - key: MONGODB_URI
         sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
+      - key: MONGODB_DATABASE
+        value: vc-brain
       - key: TAVILY_API_KEY
         sync: false
       - key: ELEVENLABS_API_KEY
