@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from openai import AsyncOpenAI
 from pydantic import ValidationError
@@ -59,7 +59,7 @@ source payload evidence-oriented. Do not explain your reasoning outside the
 JSON object.
 """
 
-TAVILY_TOOL = {
+TAVILY_TOOL: dict[str, Any] = {
     "type": "function",
     "function": {
         "name": "tavily_search",
@@ -151,7 +151,7 @@ class VCResearchAgent:
         for _ in range(self._max_rounds):
             response = await self._request(messages)
             message = response.choices[0].message
-            tool_calls = getattr(message, "tool_calls", None) or []
+            tool_calls = cast(list[Any], getattr(message, "tool_calls", None) or [])
 
             if not tool_calls:
                 return await self._finalize_layer1(
@@ -298,7 +298,11 @@ class VCResearchAgent:
         return VCResearchAgent._attach_metadata(payload)
 
 
-def build_vc_research_agent(settings: Settings | None = None) -> VCResearchAgent:
+def build_vc_research_agent(
+    settings: Settings | None = None,
+    *,
+    include_extractor: bool = True,
+) -> VCResearchAgent:
     """Build the configured OpenAI/Tavily research agent."""
     settings = settings or get_settings()
     if not settings.openai_api_key:
@@ -308,13 +312,13 @@ def build_vc_research_agent(settings: Settings | None = None) -> VCResearchAgent
     return VCResearchAgent(
         client,
         tavily,
-        extractor=FounderIntelligenceExtractionAgent(client),
+        extractor=FounderIntelligenceExtractionAgent(client) if include_extractor else None,
         planner=SearchPlanner(client),
     )
 
 
 def _assistant_tool_message(message: Any, tool_calls: list[Any]) -> dict[str, Any]:
-    serialized_calls = []
+    serialized_calls: list[dict[str, Any]] = []
     for tool_call in tool_calls:
         serialized_calls.append(
             {

@@ -10,6 +10,7 @@ from app.intelligence.founder_extraction import (
     FounderIntelligenceBatch,
     build_founder_extraction_agent,
 )
+from app.intelligence.identifiers import ensure_layer1_founder_identifier
 from app.intelligence.profile_models import Layer1Input
 from app.intelligence.research_agent import (
     ResearchAgentError,
@@ -83,12 +84,13 @@ async def plan_vc_query(request: ResearchRequest) -> SearchPlan:
 async def research_vc_query(request: ResearchRequest) -> ResearchQueryResponse:
     try:
         agent = build_vc_research_agent()
-        payload = await agent.research(request.query)
+        payload = ensure_layer1_founder_identifier(await agent.research(request.query))
         persistence = build_persistence_orchestrator()
         metadata = {
             "query": request.query,
             "source": "research-route",
             "createdAt": datetime.now(UTC).isoformat(),
+            "founderId": payload.metadata.founderId,
         }
         stored_run = persistence.save_research_run(payload, metadata)
         return ResearchQueryResponse(

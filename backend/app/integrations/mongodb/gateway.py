@@ -18,7 +18,7 @@ from app.domain.memos import Memo, MemoCreate
 from app.domain.signals import Signal, SignalCreate
 from app.intelligence.evidence_intelligence import EvidenceIntelligence
 from app.intelligence.investment_intelligence import InvestmentIntelligence
-from app.intelligence.profile_models import FounderProfile, Layer1Input
+from app.intelligence.profile_models import FounderIntelligence, FounderProfile, Layer1Input
 
 
 class ResearchRunRecord:
@@ -69,6 +69,22 @@ class EvidenceIntelligenceRecord:
         self.createdAt = created_at
         self.updatedAt = updated_at
         self.auditMetadata = audit_metadata
+
+
+class FounderIntelligenceRecord:
+    """Metadata returned after storing Layer 3 founder intelligence."""
+
+    def __init__(
+        self,
+        founder_id: str,
+        version: int,
+        created_at: str,
+        updated_at: str,
+    ):
+        self.founderId = founder_id
+        self.version = version
+        self.createdAt = created_at
+        self.updatedAt = updated_at
 
 
 class InvestmentIntelligenceRecord:
@@ -220,17 +236,40 @@ class MongoDBGateway:
     ) -> FounderProfileRecord:
         founder_id = self._founder_id(profile)
         now = datetime.now(UTC).isoformat()
+        existing = self._collection("founder_profiles").find_one({"founderId": founder_id})
+        version = int(existing.get("version", 0)) + 1 if existing else 1
+        created_at = str(existing.get("createdAt", now)) if existing else now
+        lineage = (
+            research_run_id
+            or str(existing.get("researchRunId", ""))
+            if existing
+            else research_run_id or ""
+        )
         document = self._founder_profile_document(
             profile=profile,
             founder_id=founder_id,
-            research_run_id=research_run_id or "",
-            version=1,
-            created_at=now,
+            research_run_id=lineage,
+            version=version,
+            created_at=created_at,
             updated_at=now,
         )
-        self._collection("founder_profiles").insert_one(document)
+        if existing:
+            for field_name in (
+                "founderIntelligence",
+                "evidenceIntelligence",
+                "investmentIntelligence",
+                "auditMetadata",
+            ):
+                if field_name in existing and document.get(field_name) in (None, [], {}):
+                    document[field_name] = existing[field_name]
+        if existing:
+            self._collection("founder_profiles").update_one(
+                {"founderId": founder_id}, {"$set": document}
+            )
+        else:
+            self._collection("founder_profiles").insert_one(document)
         return FounderProfileRecord(
-            founder_id, research_run_id or "", profile, 1, now, now
+            founder_id, lineage, profile, version, created_at, now
         )
 
     def update_founder_profile(
@@ -297,6 +336,35 @@ class MongoDBGateway:
         return EvidenceIntelligenceRecord(
             founder_id, version, created_at, now, audit_history
         )
+
+    def enrich_founder_with_founder_intelligence(
+        self,
+        founder_id: str,
+        intelligence: FounderIntelligence,
+    ) -> FounderIntelligenceRecord:
+        collection = self._collection("founder_profiles")
+        existing = collection.find_one({"founderId": founder_id})
+        if existing is None:
+            raise KeyError(f"Founder profile {founder_id!r} does not exist.")
+
+        now = datetime.now(UTC).isoformat()
+        version = int(existing.get("version", 0)) + 1
+        created_at = str(existing.get("createdAt", now))
+        metadata = dict(existing.get("metadata", {}))
+        metadata["lastUpdated"] = now
+        collection.update_one(
+            {"founderId": founder_id},
+            {
+                "$set": {
+                    "founderIntelligence": intelligence.model_dump(mode="json"),
+                    "profileVersion": version,
+                    "metadata": metadata,
+                    "version": version,
+                    "updatedAt": now,
+                }
+            },
+        )
+        return FounderIntelligenceRecord(founder_id, version, created_at, now)
 
     def enrich_founder_with_investment_intelligence(
         self,
@@ -370,6 +438,7 @@ class MongoDBGateway:
             "founderId": founder_id,
             "researchRunId": research_run_id,
             "version": version,
+            "profileVersion": version,
             "createdAt": created_at,
             "updatedAt": updated_at,
         }

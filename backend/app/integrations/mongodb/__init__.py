@@ -1,5 +1,6 @@
 from app.integrations.mongodb.gateway import (
 	EvidenceIntelligenceRecord,
+	FounderIntelligenceRecord,
 	FounderProfileRecord,
 	InvestmentIntelligenceRecord,
 	InvestmentMemoArtifactRecord,
@@ -10,6 +11,7 @@ from app.integrations.mongodb.gateway import (
 
 __all__ = [
 	"EvidenceIntelligenceRecord",
+	"FounderIntelligenceRecord",
 	"FounderProfileRecord",
 	"InvestmentIntelligenceRecord",
 	"InvestmentMemoArtifactRecord",

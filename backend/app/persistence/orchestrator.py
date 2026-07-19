@@ -14,6 +14,7 @@ from app.domain.investment_memos import InvestmentMemoArtifact
 from app.domain.memos import Memo, MemoCreate
 from app.integrations.mongodb import (
     EvidenceIntelligenceRecord,
+    FounderIntelligenceRecord,
     FounderProfileRecord,
     InvestmentIntelligenceRecord,
     InvestmentMemoArtifactRecord,
@@ -22,7 +23,7 @@ from app.integrations.mongodb import (
 )
 from app.intelligence.evidence_intelligence import EvidenceIntelligence
 from app.intelligence.investment_intelligence import InvestmentIntelligence
-from app.intelligence.profile_models import FounderProfile, Layer1Input
+from app.intelligence.profile_models import FounderIntelligence, FounderProfile, Layer1Input
 
 
 class PersistenceGateway(Protocol):
@@ -49,6 +50,12 @@ class PersistenceGateway(Protocol):
         intelligence: EvidenceIntelligence,
         audit_metadata: dict[str, Any] | None = None,
     ) -> EvidenceIntelligenceRecord: ...
+
+    def enrich_founder_with_founder_intelligence(
+        self,
+        founder_id: str,
+        intelligence: FounderIntelligence,
+    ) -> FounderIntelligenceRecord: ...
 
     def enrich_founder_with_investment_intelligence(
         self,
@@ -101,6 +108,15 @@ class PersistenceOrchestrator:
     ) -> EvidenceIntelligenceRecord:
         return self._gateway.enrich_founder_with_evidence_intelligence(
             founder_id, intelligence, audit_metadata
+        )
+
+    def save_founder_intelligence(
+        self,
+        founder_id: str,
+        intelligence: FounderIntelligence,
+    ) -> FounderIntelligenceRecord:
+        return self._gateway.enrich_founder_with_founder_intelligence(
+            founder_id, intelligence
         )
 
     def save_investment_intelligence(

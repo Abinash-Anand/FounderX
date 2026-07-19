@@ -334,6 +334,37 @@ class Unknown(ProfileModel):
     entityId: str = ""
 
 
+class ConfidenceScore(ProfileModel):
+    dimension: str = ""
+    score: float = 0.0
+
+
+class InsightEvidence(ProfileModel):
+    insight: str = ""
+    evidenceIds: list[str] = Field(default_factory=list)
+
+
+class InsightReasoning(ProfileModel):
+    insight: str = ""
+    reasoning: str = ""
+
+
+class FounderIntelligence(ProfileModel):
+    """Layer 3 evidence-grounded founder assessment."""
+
+    strengths: list[str] = Field(default_factory=list)
+    weaknesses: list[str] = Field(default_factory=list)
+    executionRisks: list[str] = Field(default_factory=list)
+    leadershipAssessment: str = ""
+    technicalDepthAssessment: str = ""
+    marketCredibility: str = ""
+    founderQualitySignals: list[str] = Field(default_factory=list)
+    confidenceScores: list[ConfidenceScore] = Field(default_factory=list)
+    missingInformation: list[str] = Field(default_factory=list)
+    evidenceReferences: list[InsightEvidence] = Field(default_factory=list)
+    reasoning: list[InsightReasoning] = Field(default_factory=list)
+
+
 class FounderProfile(ProfileModel):
     """Schema-compliant output of the Layer 2 profile-generation stage."""
 
@@ -358,6 +389,8 @@ class FounderProfile(ProfileModel):
     entities: Entities = Field(default_factory=Entities)
     evidence: list[Evidence] = Field(default_factory=list)
     unknowns: list[Unknown] = Field(default_factory=list)
+    founderIntelligence: FounderIntelligence | None = None
+    profileVersion: int = 0
 
     @model_validator(mode="before")
     @classmethod

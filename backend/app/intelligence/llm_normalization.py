@@ -151,7 +151,7 @@ async def structure_founder_profile(
     response = await client.complete_json(
         system_prompt=FOUNDER_PROFILE_SYSTEM_PROMPT,
         user_prompt=user_prompt,
-        schema=_strict_json_schema(FounderProfile.model_json_schema()),
+        schema=_strict_json_schema(_layer2_profile_schema()),
     )
     try:
         return FounderProfile.model_validate(response)
@@ -159,3 +159,14 @@ async def structure_founder_profile(
         raise ProfileNormalizationError(
             "The LLM response did not match the FounderProfile schema."
         ) from error
+
+
+def _layer2_profile_schema() -> dict[str, Any]:
+    """Keep Layer 3 enrichment fields out of the Layer 2 generation prompt."""
+    schema = deepcopy(FounderProfile.model_json_schema())
+    properties = schema.get("properties", {})
+    required = schema.get("required", [])
+    properties.pop("founderIntelligence", None)
+    properties.pop("profileVersion", None)
+    schema["required"] = [name for name in required if name in properties]
+    return schema

@@ -139,8 +139,10 @@ def test_research_route_persists_research_run_and_returns_id(monkeypatch) -> Non
     assert response.status_code == 200
     assert response.json()["researchRunId"] == "run-123"
     assert response.json()["tavily"]["claims"][0]["founder"] == "Ada Lovelace"
+    assert response.json()["metadata"]["founderId"]
     assert fake_gateway.saved_documents[0]["immutable"] is True
     assert fake_gateway.saved_documents[0]["rawResponses"] == []
+    assert fake_gateway.saved_documents[0]["metadata"]["founderId"]
 
 
 def test_research_route_returns_503_when_integrations_are_missing(monkeypatch) -> None:

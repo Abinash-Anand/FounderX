@@ -9,7 +9,7 @@ from app.domain.investment_memos import InvestmentMemoArtifact
 from app.integrations.mongodb.gateway import build_mongodb_gateway
 from app.intelligence.evidence_intelligence import EvidenceIntelligence
 from app.intelligence.investment_intelligence import InvestmentIntelligence
-from app.intelligence.profile_models import FounderProfile
+from app.intelligence.profile_models import FounderIntelligence, FounderProfile
 
 
 class FakeCollection:
@@ -235,6 +235,58 @@ def test_evidence_intelligence_enriches_without_overwriting_layer2(monkeypatch):
     assert second_result.version == result.version + 1
     assert document["auditMetadata"][0]["jobId"] == "layer-3-job"
     assert document["auditMetadata"][1]["jobId"] == "layer-3-job-2"
+
+
+def test_founder_intelligence_updates_existing_profile(monkeypatch):
+    monkeypatch.setattr("app.integrations.mongodb.gateway.MongoClient", FakeMongoClient)
+    gateway = build_mongodb_gateway(
+        Settings(mongodb_uri="mongodb://localhost:27017", mongodb_database="vc_test")
+    )
+    profile = FounderProfile.model_validate(
+        {"metadata": {"profileId": "founder-123"}, "founder": {"name": "Ada Lovelace"}}
+    )
+    saved = gateway.create_founder_profile(profile, "run-123")
+    intelligence = FounderIntelligence.model_validate(
+        {
+            "strengths": ["Technical depth"],
+            "confidenceScores": [{"dimension": "technicalDepth", "score": 0.9}],
+        }
+    )
+
+    result = gateway.enrich_founder_with_founder_intelligence(
+        saved.founderId,
+        intelligence,
+    )
+    documents = gateway._collection("founder_profiles").documents
+
+    assert len(documents) == 1
+    assert documents[0]["founderIntelligence"] == intelligence.model_dump(mode="json")
+    assert documents[0]["profileVersion"] == 2
+    assert documents[0]["metadata"]["lastUpdated"] == result.updatedAt
+    assert result.version == 2
+
+
+def test_create_founder_profile_upserts_same_identifier(monkeypatch):
+    monkeypatch.setattr("app.integrations.mongodb.gateway.MongoClient", FakeMongoClient)
+    gateway = build_mongodb_gateway(
+        Settings(mongodb_uri="mongodb://localhost:27017", mongodb_database="vc_test")
+    )
+    first_profile = FounderProfile.model_validate(
+        {"metadata": {"profileId": "founder-123"}, "founder": {"name": "Ada Lovelace"}}
+    )
+    second_profile = FounderProfile.model_validate(
+        {"metadata": {"profileId": "founder-123"}, "founder": {"name": "Ada Byron"}}
+    )
+
+    first = gateway.create_founder_profile(first_profile, "run-123")
+    second = gateway.create_founder_profile(second_profile, "run-456")
+    documents = gateway._collection("founder_profiles").documents
+
+    assert len(documents) == 1
+    assert documents[0]["founder"]["name"] == "Ada Byron"
+    assert first.version == 1
+    assert second.version == 2
+    assert documents[0]["profileVersion"] == 2
 
 
 def test_evidence_intelligence_rejects_missing_founder_profile(monkeypatch):
