@@ -3,7 +3,8 @@ services:
     name: vc-brain-backend
     runtime: docker
     rootDir: backend
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     healthCheckPath: /health
     autoDeployTrigger: commit
     envVars:

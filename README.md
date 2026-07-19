@@ -45,5 +45,16 @@ All Python dependency changes must use `uv add`, `uv remove`, or `uv lock`; do n
 
 ## Deployment
 
-The root Compose file runs the complete local stack. For separate deployments, Render can build `backend/Dockerfile`, while the frontend can use `frontend/Dockerfile` with `VITE_BACKEND_URL` supplied as a build argument.
+The root Compose file runs the complete local stack. Production uses separate deployment units:
+
+- Render must deploy the backend from the repository Blueprint in `render.yaml`. The service is Docker-based, with `backend` as both its root directory and Docker build context. Do not create it as a native auto-detected service at the repository root, or Railpack will see both applications and fail to choose a build.
+- Vercel must deploy the `frontend` directory. Configure the Vercel project environment variable `VITE_BACKEND_URL` to the public Render backend URL, for example `https://vc-brain-backend.onrender.com`.
+
+The frontend GitHub Actions workflow requires these repository Actions secrets:
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+The workflow now stops with a clear error if any of these values is missing. Render still requires `MONGODB_URI` and the optional integration API keys to be configured in the service environment.
 

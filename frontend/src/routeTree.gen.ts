@@ -9,15 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ApplyRouteImport } from './routes/apply'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as InvestIdRouteImport } from './routes/invest.$id'
+import { Route as ApplyRouteImport } from './routes/apply'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as FounderIdRouteImport } from './routes/founder.$id'
+import { Route as InvestIdRouteImport } from './routes/invest.$id'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplyRoute = ApplyRouteImport.update({
@@ -25,19 +25,19 @@ const ApplyRoute = ApplyRouteImport.update({
   path: '/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const InvestIdRoute = InvestIdRouteImport.update({
-  id: '/invest/$id',
-  path: '/invest/$id',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FounderIdRoute = FounderIdRouteImport.update({
   id: '/founder/$id',
   path: '/founder/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestIdRoute = InvestIdRouteImport.update({
+  id: '/invest/$id',
+  path: '/invest/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -87,11 +87,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/apply': {
@@ -101,18 +101,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/invest/$id': {
-      id: '/invest/$id'
-      path: '/invest/$id'
-      fullPath: '/invest/$id'
-      preLoaderRoute: typeof InvestIdRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/founder/$id': {
@@ -120,6 +113,13 @@ declare module '@tanstack/react-router' {
       path: '/founder/$id'
       fullPath: '/founder/$id'
       preLoaderRoute: typeof FounderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invest/$id': {
+      id: '/invest/$id'
+      path: '/invest/$id'
+      fullPath: '/invest/$id'
+      preLoaderRoute: typeof InvestIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -135,3 +135,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
