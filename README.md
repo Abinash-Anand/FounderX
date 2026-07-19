@@ -4,10 +4,10 @@ VC Brain is a full-stack monorepo for an autonomous venture workflow designed to
 
 The repository has two intentionally separate deployment units:
 
-- `frontend/`: TanStack Start + React + TypeScript, deployed natively to Vercel (never containerized).
-- `backend/`: FastAPI intelligence, memory, and media modules, deployed as a lean Docker image to Render.
+- `frontend/`: TanStack Start + React + TypeScript, containerized as a Node/Nitro runtime.
+- `backend/`: FastAPI intelligence, memory, and media modules, containerized with Python and uv.
 
-MongoDB Atlas is now the persistence target for founder, memo, and signal records. The root Compose stack is no longer used for the primary database workflow.
+MongoDB runs in Compose with the named `mongodb-data` volume. Configure the optional API keys in `.env` for research, intelligence, and media integrations.
 
 ## Quick start
 
@@ -19,27 +19,19 @@ MongoDB Atlas is now the persistence target for founder, memo, and signal record
    cp backend/.env.example backend/.env
    ```
 
-2. Start the local backend and any optional supporting services:
+2. Start the frontend, backend, and MongoDB services:
 
    ```bash
    docker compose up --build
    ```
 
-3. Start the frontend on the host (it is deliberately not part of Compose):
-
-   ```bash
-   cd frontend
-   npm ci
-   npm run dev
-   ```
-
 Local endpoints:
 
 - Frontend: `http://localhost:3000`
-- FastAPI/OpenAPI: `http://localhost:8080/docs`
+- FastAPI/OpenAPI: `http://localhost:9000/docs`
 - MongoDB: `mongodb://localhost:27017`
 
-The Compose stack no longer provisions the primary data plane. Configure `MONGODB_URI` and `MONGODB_DATABASE` for the backend to connect to Atlas or a local MongoDB instance.
+MongoDB runs in Compose with the named `mongodb-data` volume. Configure the optional API keys in `.env` for research, intelligence, and media integrations.
 
 ## Development commands
 
@@ -53,5 +45,5 @@ All Python dependency changes must use `uv add`, `uv remove`, or `uv lock`; do n
 
 ## Deployment
 
-Connect `frontend/` as the Vercel project root. Render can consume `render.yaml` or build `backend/Dockerfile` with `backend/` as its Docker context. Configure the secrets documented in each deployment unit's `.env.example`.
+The root Compose file runs the complete local stack. For separate deployments, Render can build `backend/Dockerfile`, while the frontend can use `frontend/Dockerfile` with `VITE_BACKEND_URL` supplied as a build argument.
 
