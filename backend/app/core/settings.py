@@ -1,12 +1,16 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+REPOSITORY_ROOT = BACKEND_ROOT.parent
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(REPOSITORY_ROOT / ".env", BACKEND_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
