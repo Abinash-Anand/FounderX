@@ -1,16 +1,14 @@
-name: Backend CI/CD (Render)
+name: Backend CI
 
 on:
   pull_request:
     paths:
       - "backend/**"
-      - "render.yaml"
       - ".github/workflows/backend.yml"
   push:
     branches: [main]
     paths:
       - "backend/**"
-      - "render.yaml"
       - ".github/workflows/backend.yml"
 
 concurrency:
@@ -33,9 +31,4 @@ jobs:
       - run: uv run ruff check .
       - run: uv run pytest
       - run: docker build --tag vc-brain-backend:${{ github.sha }} .
-      - name: Trigger Render deploy
-        if: github.ref == 'refs/heads/main'
-        env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl --fail-with-body --request POST "$RENDER_DEPLOY_HOOK_URL"
 

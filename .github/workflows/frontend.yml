@@ -1,4 +1,4 @@
-name: Frontend CI/CD (Vercel)
+name: Frontend CI
 
 on:
   pull_request:
@@ -16,32 +16,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Validate Vercel credentials
-        shell: bash
-        run: |
-          missing=()
-          for variable in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
-            if [[ -z "${!variable}" ]]; then
-              missing+=("$variable")
-            fi
-          done
-
-          if (( ${#missing[@]} > 0 )); then
-            echo "::error::Missing GitHub Actions secrets: ${missing[*]}"
-            echo "Add VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID in the repository Settings > Secrets and variables > Actions."
-            exit 1
-          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -49,10 +30,4 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
-      - name: Pull Vercel environment
-        run: npx vercel@latest pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token="$VERCEL_TOKEN"
-      - name: Build Vercel artifact
-        run: npx vercel@latest build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token="$VERCEL_TOKEN"
-      - name: Deploy Vercel artifact
-        run: npx vercel@latest deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token="$VERCEL_TOKEN"
 

@@ -45,16 +45,13 @@ All Python dependency changes must use `uv add`, `uv remove`, or `uv lock`; do n
 
 ## Deployment
 
-The root Compose file runs the complete local stack. Production uses separate deployment units:
+The root Compose file is for local development only. Railway deploys the monorepo as three independent services:
 
-- Render must deploy the backend from the repository Blueprint in `render.yaml`. The service is Docker-based, with `backend` as both its root directory and Docker build context. Do not create it as a native auto-detected service at the repository root, or Railpack will see both applications and fail to choose a build.
-- Vercel must deploy the `frontend` directory. Configure the Vercel project environment variable `VITE_BACKEND_URL` to the public Render backend URL, for example `https://vc-brain-backend.onrender.com`.
+1. Create a MongoDB service from Railway's MongoDB template. Use its generated connection URL as the backend `MONGODB_URI`.
+2. Create a backend service from this repository with root directory `/backend`. Railway will use `backend/Dockerfile`; set `APP_ENV=production`, `MONGODB_DATABASE=vc-brain`, `CORS_ORIGINS` to the public frontend URL, and the optional integration API keys. The backend `PORT` is supplied by Railway.
+3. Create a frontend service from this repository with root directory `/frontend`. Railway will use `frontend/Dockerfile`; set `VITE_BACKEND_URL` to the public backend URL. This is a build-time variable and must be present before the frontend deploy is built.
 
-The frontend GitHub Actions workflow requires these repository Actions secrets:
+For services created through the Railway dashboard, set the config file path explicitly to `/backend/railway.toml` and `/frontend/railway.toml`. Railway's config file is relative to the repository root even when a service root directory is configured.
 
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
-
-The workflow now stops with a clear error if any of these values is missing. Render still requires `MONGODB_URI` and the optional integration API keys to be configured in the service environment.
+The GitHub Actions workflows run CI checks and Docker builds only. Railway handles deployment independently for each service, so local `docker compose up --build` remains unchanged as the local workflow.
 

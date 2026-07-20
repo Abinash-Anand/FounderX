@@ -24,7 +24,7 @@ services:
     environment:
       APP_ENV: local
       PORT: 8000
-      CORS_ORIGINS: '["http://localhost:3000"]'
+      CORS_ORIGINS: http://localhost:3000
       MONGODB_URI: mongodb://mongodb:27017
       MONGODB_DATABASE: vc-brain
       TAVILY_API_KEY: ${TAVILY_API_KEY:-}
