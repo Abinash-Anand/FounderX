@@ -10,33 +10,79 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApplyRouteImport } from './routes/apply'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as FounderIdRouteImport } from './routes/founder.$id'
+import { Route as InvestIdRouteImport } from './routes/invest.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApplyRoute = ApplyRouteImport.update({
+  id: '/apply',
+  path: '/apply',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FounderIdRoute = FounderIdRouteImport.update({
+  id: '/founder/$id',
+  path: '/founder/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestIdRoute = InvestIdRouteImport.update({
+  id: '/invest/$id',
+  path: '/invest/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/apply': typeof ApplyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/founder/$id': typeof FounderIdRoute
+  '/invest/$id': typeof InvestIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/apply': typeof ApplyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/founder/$id': typeof FounderIdRoute
+  '/invest/$id': typeof InvestIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/apply': typeof ApplyRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/founder/$id': typeof FounderIdRoute
+  '/invest/$id': typeof InvestIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/apply' | '/sitemap.xml' | '/founder/$id' | '/invest/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/apply' | '/sitemap.xml' | '/founder/$id' | '/invest/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/apply'
+    | '/sitemap.xml'
+    | '/founder/$id'
+    | '/invest/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApplyRoute: typeof ApplyRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  FounderIdRoute: typeof FounderIdRoute
+  InvestIdRoute: typeof InvestIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,21 +94,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/apply': {
+      id: '/apply'
+      path: '/apply'
+      fullPath: '/apply'
+      preLoaderRoute: typeof ApplyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/founder/$id': {
+      id: '/founder/$id'
+      path: '/founder/$id'
+      fullPath: '/founder/$id'
+      preLoaderRoute: typeof FounderIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invest/$id': {
+      id: '/invest/$id'
+      path: '/invest/$id'
+      fullPath: '/invest/$id'
+      preLoaderRoute: typeof InvestIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApplyRoute: ApplyRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  FounderIdRoute: FounderIdRoute,
+  InvestIdRoute: InvestIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

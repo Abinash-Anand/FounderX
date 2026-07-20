@@ -1,12 +1,16 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
+REPOSITORY_ROOT = BACKEND_ROOT.parent
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(REPOSITORY_ROOT / ".env", BACKEND_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -15,10 +19,10 @@ class Settings(BaseSettings):
     port: int = 8000
     cors_origins: list[str] = ["http://localhost:3000"]
 
-    supabase_url: str | None = None
-    supabase_service_role_key: SecretStr | None = None
-    supabase_pitch_deck_bucket: str = "pitch-decks"
-    supabase_memo_audio_bucket: str = "investment-memos"
+    mongodb_uri: str | None = None
+    mongodb_database: str = "vc-brain"
+    mongodb_pitch_deck_bucket: str = "pitch-decks"
+    mongodb_memo_audio_bucket: str = "investment-memos"
 
     tavily_api_key: SecretStr | None = None
     elevenlabs_api_key: SecretStr | None = None

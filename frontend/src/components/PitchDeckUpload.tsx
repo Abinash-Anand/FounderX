@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react'
-import { getSupabaseBrowserClient } from '../lib/supabase'
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024
 
@@ -19,23 +18,19 @@ export function PitchDeckUpload() {
     }
 
     setStatus('uploading')
-    setMessage('Encrypting and uploading…')
+    setMessage('Uploading to MongoDB…')
 
     try {
-      const supabase = getSupabaseBrowserClient()
-      const { data: userData, error: userError } = await supabase.auth.getUser()
-      if (userError || !userData.user) {
-        throw new Error('Sign in before uploading a confidential deck.')
+      const formData = new FormData()
+      formData.append('file', file)
+      const response = await fetch(
+        `${import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:9000'}/v1/memos/pitch-deck`,
+        { method: 'POST', body: formData },
+      )
+      if (!response.ok) {
+        const body = await response.json().catch(() => undefined)
+        throw new Error(body?.detail ?? 'Upload failed. Try again.')
       }
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '-')
-      const path = `${userData.user.id}/incoming/${crypto.randomUUID()}-${safeName}`
-      const { error } = await supabase.storage.from('pitch-decks').upload(path, file, {
-        cacheControl: '3600',
-        contentType: file.type,
-        upsert: false,
-      })
-
-      if (error) throw error
       setStatus('success')
       setMessage('Deck received. Screening can begin.')
       setFile(undefined)
@@ -53,7 +48,7 @@ export function PitchDeckUpload() {
           <p className="eyebrow">New opportunity</p>
           <h2>Upload a pitch deck</h2>
         </div>
-        <span className="secure-mark">Private</span>
+        <span className="secure-mark">MongoDB</span>
       </div>
       <form onSubmit={uploadPitchDeck}>
         <label className="file-drop">

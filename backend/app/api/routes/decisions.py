@@ -3,6 +3,8 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+from app.intelligence.decision_service import evaluate_decision_state
+
 router = APIRouter()
 
 
@@ -20,22 +22,10 @@ class DecisionResponse(BaseModel):
 
 @router.post("/evaluate", response_model=DecisionResponse)
 async def evaluate_deal(request: DecisionRequest) -> DecisionResponse:
-    # Imported on demand so the health route does not pay LangGraph's import cost.
-    from app.intelligence.graph import build_decision_graph
-
-    graph = build_decision_graph()
-    state = await graph.ainvoke(
-        {
-            "company_name": request.company_name,
-            "thesis": request.thesis,
-            "source_urls": request.source_urls,
-            "mapped_signals": [],
-            "signals": [],
-            "scores": {},
-            "diligence_notes": [],
-            "recommendation": "pending",
-            "errors": [],
-        }
+    state = await evaluate_decision_state(
+        company_name=request.company_name,
+        thesis=request.thesis,
+        source_urls=request.source_urls,
     )
     return DecisionResponse(
         company_name=request.company_name,
