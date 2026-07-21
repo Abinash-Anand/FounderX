@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+import json
 
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -17,7 +18,9 @@ class Settings(BaseSettings):
 
     app_env: str = "local"
     port: int = 8000
-    cors_origins: list[str] = ["http://localhost:3000"]
+
+    # Accept either a string or a list from environment variables
+    cors_origins: str | list[str] = ["http://localhost:3000"]
 
     mongodb_uri: str | None = None
     mongodb_database: str = "vc-brain"
@@ -32,13 +35,27 @@ class Settings(BaseSettings):
 
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def split_cors_origins(cls, value: object) -> object:
+    def parse_cors_origins(cls, value):
+        if isinstance(value, list):
+            return value
+
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
-        return value
+            value = value.strip()
+
+            # Handle JSON array
+            if value.startswith("["):
+                return json.loads(value)
+
+            # Handle comma-separated string
+            return [
+                origin.strip()
+                for origin in value.split(",")
+                if origin.strip()
+            ]
+
+        return ["http://localhost:3000"]
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
