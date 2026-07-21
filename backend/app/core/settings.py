@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # Accept either a string or a list from environment variables
-    cors_origins: str | list[str] = ["http://localhost:3000"]
+    cors_origins: str | list[str] = ["https://founder-mju672edf-abinash-anands-projects.vercel.app/"]
 
     mongodb_uri: str | None = None
     mongodb_database: str = "vc-brain"
@@ -53,7 +53,7 @@ class Settings(BaseSettings):
                 if origin.strip()
             ]
 
-        return ["http://localhost:3000"]
+        return ["https://founder-mju672edf-abinash-anands-projects.vercel.app/"]
 
 
 @lru_cache
