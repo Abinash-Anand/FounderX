@@ -58,4 +58,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings() fix the cors issue and give the entire file
+    return Settings()
