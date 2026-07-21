@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # Accept either a string or a list from environment variables
-    cors_origins: str | list[str] = ["https://founder-mju672edf-abinash-anands-projects.vercel.app/"]
+    cors_origins: str | list[str] = ["http://localhost:3000"]
 
     mongodb_uri: str | None = None
     mongodb_database: str = "vc-brain"
@@ -48,14 +48,24 @@ class Settings(BaseSettings):
 
             # Handle comma-separated string
             return [
-                origin.strip()
+                origin.strip().rstrip("/")
                 for origin in value.split(",")
                 if origin.strip()
             ]
 
-        return ["https://founder-mju672edf-abinash-anands-projects.vercel.app/"]
+        return ["http://localhost:3000"]
 
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+
+    print("=" * 80)
+    print("Application Settings")
+    print(f"APP_ENV: {settings.app_env}")
+    print(f"PORT: {settings.port}")
+    print(f"CORS_ORIGINS: {settings.cors_origins}")
+    print(f"CORS_ORIGINS TYPE: {type(settings.cors_origins)}")
+    print("=" * 80)
+
+    return settings
