@@ -19,11 +19,8 @@ class Settings(BaseSettings):
     app_env: str = "local"
     port: int = 8000
 
-    # Accept:
-    # *
-    # http://localhost:3000,http://localhost:5173
-    # ["http://localhost:3000","http://localhost:5173"]
-    cors_origins: list[str] = ["http://localhost:3000"]
+    # Accept either a string or a list from environment variables
+    cors_origins: str | list[str] = ["http://localhost:3000"]
 
     mongodb_uri: str | None = None
     mongodb_database: str = "vc-brain"
@@ -39,21 +36,17 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value):
-        if value is None:
-            return ["http://localhost:3000"]
-
         if isinstance(value, list):
             return value
 
         if isinstance(value, str):
             value = value.strip()
 
-            if value == "*":
-                return ["*"]
-
+            # Handle JSON array
             if value.startswith("["):
                 return json.loads(value)
 
+            # Handle comma-separated string
             return [
                 origin.strip()
                 for origin in value.split(",")
@@ -65,4 +58,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings() fix the cors issue and give the entire file
