@@ -308,12 +308,13 @@ def build_vc_research_agent(
     if not settings.openai_api_key:
         raise IntegrationNotConfigured("VC research requires OPENAI_API_KEY.")
     tavily = build_tavily_search(settings)
-    client = AsyncOpenAI(api_key=settings.openai_api_key.get_secret_value())
+    api_key = settings.openai_api_key.get_secret_value()
+    client = AsyncOpenAI(api_key=api_key)
     return VCResearchAgent(
         client,
         tavily,
         extractor=FounderIntelligenceExtractionAgent(client) if include_extractor else None,
-        planner=SearchPlanner(client),
+        planner=SearchPlanner(client, api_key=api_key),
     )
 
 
