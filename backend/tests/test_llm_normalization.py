@@ -46,6 +46,7 @@ def test_structuring_normalizes_input_and_validates_llm_output() -> None:
     assert client.schema["additionalProperties"] is False
     assert set(client.schema["required"]) == set(client.schema["properties"])
     _assert_all_objects_are_closed(client.schema)
+    _assert_no_unsupported_constraints(client.schema)
 
 
 def test_structuring_rejects_output_outside_founder_profile_schema() -> None:
@@ -68,3 +69,21 @@ def _assert_all_objects_are_closed(node: Any) -> None:
         _assert_all_objects_are_closed(option)
     for definition in node.get("$defs", {}).values():
         _assert_all_objects_are_closed(definition)
+
+
+def _assert_no_unsupported_constraints(node: Any) -> None:
+    if isinstance(node, dict):
+        unsupported = {
+            "minItems",
+            "maxItems",
+            "minLength",
+            "maxLength",
+            "pattern",
+            "format",
+        }
+        assert not unsupported & set(node)
+        for value in node.values():
+            _assert_no_unsupported_constraints(value)
+    elif isinstance(node, list):
+        for value in node:
+            _assert_no_unsupported_constraints(value)

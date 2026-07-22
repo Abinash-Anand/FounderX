@@ -36,8 +36,6 @@ SEARCH_PLAN_SCHEMA = {
         "searches": {
             "type": "array",
             "items": {"type": "string"},
-            "minItems": 1,
-            "maxItems": 10,
         }
     },
     "required": ["searches"],

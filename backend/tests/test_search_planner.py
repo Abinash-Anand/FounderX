@@ -36,6 +36,9 @@ def test_search_planner_returns_focused_searches() -> None:
         "AI infrastructure startup funding Europe",
     ]
     assert client.calls[0]["response_format"]["type"] == "json_schema"
+    schema = client.calls[0]["response_format"]["json_schema"]["schema"]
+    assert "minItems" not in schema["properties"]["searches"]
+    assert "maxItems" not in schema["properties"]["searches"]
     assert "Each search should answer one question" in client.calls[0]["messages"][0]["content"]
 
 

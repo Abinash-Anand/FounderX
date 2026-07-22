@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import copy
 import json
 from typing import Any
 
@@ -11,6 +10,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from app.core.errors import IntegrationNotConfigured
 from app.core.settings import Settings, get_settings
+from app.intelligence.llm_normalization import _strict_json_schema
 
 FOUNDER_EXTRACTION_SYSTEM_PROMPT = """You are a Founder Intelligence Extraction Agent.
 
@@ -150,34 +150,6 @@ def build_founder_extraction_agent(
     return FounderIntelligenceExtractionAgent(
         AsyncOpenAI(api_key=settings.openai_api_key.get_secret_value())
     )
-
-
-def _strict_json_schema(schema: dict[str, Any]) -> dict[str, Any]:
-    result = copy.deepcopy(schema)
-    _visit_schema_node(result)
-    return result
-
-
-def _visit_schema_node(node: Any) -> None:
-    if not isinstance(node, dict):
-        return
-    if node.get("type") == "object" and isinstance(node.get("properties"), dict):
-        properties = node["properties"]
-        node["additionalProperties"] = False
-        node["required"] = list(properties)
-        for child in properties.values():
-            _visit_schema_node(child)
-    if isinstance(node.get("items"), dict):
-        _visit_schema_node(node["items"])
-    for key in ("anyOf", "oneOf", "allOf"):
-        options = node.get(key)
-        if isinstance(options, list):
-            for option in options:
-                _visit_schema_node(option)
-    definitions = node.get("$defs")
-    if isinstance(definitions, dict):
-        for definition in definitions.values():
-            _visit_schema_node(definition)
 
 
 def _enrich_source_supports(

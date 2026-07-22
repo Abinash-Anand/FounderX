@@ -139,7 +139,32 @@ def _strict_json_schema(schema: dict[str, Any]) -> dict[str, Any]:
     """Make Pydantic's schema compatible with OpenAI strict structured outputs."""
     strict_schema = deepcopy(schema)
     _visit_schema_node(strict_schema)
+    _remove_unsupported_constraints(strict_schema)
     return strict_schema
+
+
+def _remove_unsupported_constraints(node: Any) -> None:
+    """Drop JSON Schema keywords unsupported by OpenAI strict mode.
+
+    Validation still happens locally through the corresponding Pydantic models
+    after the model response has been received.
+    """
+    if isinstance(node, dict):
+        unsupported = (
+            "minItems",
+            "maxItems",
+            "minLength",
+            "maxLength",
+            "pattern",
+            "format",
+        )
+        for keyword in unsupported:
+            node.pop(keyword, None)
+        for value in node.values():
+            _remove_unsupported_constraints(value)
+    elif isinstance(node, list):
+        for value in node:
+            _remove_unsupported_constraints(value)
 
 
 async def structure_founder_profile(
