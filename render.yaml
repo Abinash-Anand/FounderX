@@ -13,7 +13,7 @@ services:
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: CORS_ORIGINS
-        value: '["https://founder-mju672edf-abinash-anands-projects.vercel.app"]'
+        value: '["https://founder-mju672edf-abinash-anands-projects.vercel.app","https://founder-x-git-main-abinash-anands-projects.vercel.app"]'
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DATABASE
