@@ -5,10 +5,10 @@ export function LandingPage() {
     <main className="landing" id="main-content">
       <section className="landing__hero" aria-labelledby="landing-title">
         <div className="landing__copy">
-          <p className="eyebrow">Founder intelligence, grounded in evidence</p>
-          <h1 id="landing-title">Know the founder behind the company.</h1>
+          <p className="eyebrow">Evidence-backed founder discovery</p>
+          <h1 id="landing-title">Find the founders worth a closer look.</h1>
           <p>
-            Turn a single research question into a structured founder profile, traceable evidence,
+            Turn an investment thesis into focused founder research, traceable evidence,
             investment intelligence, and a clear recommendation.
           </p>
         </div>

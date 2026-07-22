@@ -24,7 +24,7 @@ export function FounderSearchForm() {
     event.preventDefault()
     const normalized = query.trim()
     if (!normalized) {
-      setValidationError('Enter a founder, company, or research question.')
+      setValidationError('Enter an investment thesis, founder, company, or market to research.')
       return
     }
     if (normalized.length > QUERY_LIMIT) {
@@ -47,7 +47,7 @@ export function FounderSearchForm() {
 
   return (
     <form className="founder-search" onSubmit={(event) => void submit(event)} noValidate>
-      <label htmlFor="founder-query">Who would you like to understand?</label>
+      <label htmlFor="founder-query">What founder or opportunity should we research?</label>
       <div className="founder-search__control">
         <textarea
           id="founder-query"
@@ -55,7 +55,7 @@ export function FounderSearchForm() {
           value={query}
           maxLength={QUERY_LIMIT}
           rows={3}
-          placeholder="e.g. Research the founder of Acme AI and assess their execution history"
+          placeholder="e.g. Find AI infrastructure founders in Europe raising Seed or Series A"
           aria-describedby="founder-query-help founder-query-error"
           aria-invalid={Boolean(validationError)}
           onChange={(event) => {
@@ -65,12 +65,12 @@ export function FounderSearchForm() {
           }}
         />
         <button className="button button--primary founder-search__submit" type="submit">
-          Analyze founder
+          Research founder
           <span aria-hidden="true">→</span>
         </button>
       </div>
       <div className="founder-search__meta">
-        <p id="founder-query-help">Include the founder, company, and the questions you want investigated.</p>
+        <p id="founder-query-help">Describe the market, geography, stage, or founder signals you want investigated.</p>
         <span>{query.length.toLocaleString()} / {QUERY_LIMIT.toLocaleString()}</span>
       </div>
       <p className="form-error" id="founder-query-error" role="alert">
