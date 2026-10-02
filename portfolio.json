@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "title": "FounderX",
+  "summary": "A founder research workspace for venture investors: a natural-language query becomes a structured, evidence-linked founder profile.",
+  "year": "2026",
+  "category": "Founder intelligence platform",
+  "role": "Full-stack engineering",
+  "stack": [
+    "Python",
+    "FastAPI",
+    "LangGraph",
+    "OpenAI API",
+    "MongoDB",
+    "React",
+    "TypeScript",
+    "Docker"
+  ],
+  "highlights": [
+    "Pipeline from a free-text investor query to a persisted, schema-validated founder profile with evidence references and explicit unknowns",
+    "Web research planned by an OpenAI-backed search planner and run through Tavily, with extraction and structuring by OpenAI",
+    "Deterministic, unit-tested modules for evidence reliability, claim verification, contradiction and gap detection",
+    "Investment memos with ElevenLabs audio narration and pitch-deck upload",
+    "GitHub Actions pipelines that lint, test and build, then deploy the backend to Render and the frontend to Vercel"
+  ],
+  "links": [
+    {
+      "kind": "repository",
+      "label": "Source on GitHub",
+      "href": "https://github.com/Abinash-Anand/FounderX"
+    },
+    {
+      "kind": "demo",
+      "label": "FounderX on Vercel",
+      "href": "https://founder-x-beta.vercel.app/"
+    }
+  ],
+  "visual": {
+    "kind": "retrieval",
+    "labels": [
+      "QUERY",
+      "SEARCH",
+      "EVIDENCE",
+      "PROFILE"
+    ]
+  },
+  "narrative": {
+    "problem": "Judging a founder means assembling scattered public evidence and knowing how far each claim can be trusted, while the stated aim of the system is to get from sourcing to an investment decision within 24 hours.",
+    "constraints": "Model output is not treated as fact: prompts require Unknown when a claim cannot be verified, profiles are validated against a strict schema, and every generated insight carries its evidence references.",
+    "decision": "A FastAPI service plans focused web searches, researches them with Tavily, extracts and structures a founder profile with OpenAI, persists it to MongoDB and enriches it with evidence-linked insights, behind a React workspace.",
+    "result": "An end-to-end analysis flow behind a React workspace deployed on Vercel: a free-text investor query returns a structured founder profile, with optional audio-narrated memos. The LangGraph decision stage is still a scaffold with placeholder scoring.",
+    "architecture": [
+      "React workspace",
+      "FastAPI service",
+      "OpenAI · Tavily",
+      "MongoDB"
+    ]
+  },
+  "implementation": {
+    "lines": [
+      "POST /v1/founders/analyze { query }",
+      "plan searches → Tavily research → extract → structure",
+      "persist → enrich → decision graph"
+    ],
+    "summary": "The analyze endpoint runs research, extraction, structuring and enrichment as persisted stages, then passes the founder to a LangGraph workflow of sourcing, screening, diligence and decision whose scoring is still a placeholder."
+  },
+  "caseStudyContent": {
+    "projectSlug": "founderx",
+    "overview": {
+      "paragraphs": [
+        "FounderX, called VC Brain in its backend, is a full-stack monorepo for an autonomous venture workflow that is designed to move from sourcing to an investment decision within 24 hours. An investor describes the founders they want to find in plain language and receives a structured founder profile backed by evidence."
+      ]
+    },
+    "problem": {
+      "paragraphs": [
+        "Evaluating a founder means collecting claims from many public sources and deciding how far each one can be trusted. Gaps and contradictions are easy to miss when the goal is a decision within a day."
+      ]
+    },
+    "role": {
+      "paragraphs": [
+        "Full-stack engineering: the research, extraction and structuring stages and their persistence, the FastAPI services, the React and TypeScript frontend, containerization and deployment. The initial repository scaffold came from a teammate."
+      ]
+    },
+    "constraints": [
+      {
+        "title": "Evidence over model confidence",
+        "paragraphs": [
+          "The research prompt forbids inventing founder information and asks for Unknown whenever a claim cannot be verified. Insights must carry matching reasoning and evidence references, or an empty evidence list when the profile gives no support."
+        ]
+      },
+      {
+        "title": "Two deployment units",
+        "paragraphs": [
+          "The frontend and the backend are deliberately separate deployment units: the backend is containerized for Render and the frontend is built and deployed on Vercel, so the frontend needs the public backend URL at build time."
+        ]
+      }
+    ],
+    "architecture": {
+      "paragraphs": [
+        "A React and TypeScript workspace, built with TanStack Router and Query, calls a FastAPI backend organised into API routes, domain models, integrations, an intelligence layer and a persistence orchestrator.",
+        "The analysis pipeline calls OpenAI and Tavily and stores the research run, the structured profile and its enrichment in MongoDB. Docker Compose runs the frontend, the backend and MongoDB locally."
+      ],
+      "visualIds": [
+        "analysis-pipeline"
+      ]
+    },
+    "technicalDecisions": [
+      {
+        "id": "persisted-stages",
+        "title": "A staged pipeline that persists as it goes",
+        "decision": {
+          "paragraphs": [
+            "Founder analysis runs as separate stages (research, extraction, structuring and intelligence) and persists the research run, the structured profile and its enrichment to MongoDB along the way."
+          ]
+        },
+        "rationale": {
+          "paragraphs": [
+            "Structuring and enrichment can also be called on their own through separate endpoints, and a failing stage is reported with its own specific error instead of a generic failure."
+          ]
+        }
+      },
+      {
+        "id": "schema-first-profiles",
+        "title": "A strict schema with an evidence registry",
+        "decision": {
+          "paragraphs": [
+            "The founder profile is a Pydantic schema covering the founder, education, experience, projects, repositories, startup history, timeline and more, together with an evidence registry and a list of unknowns."
+          ]
+        },
+        "rationale": {
+          "paragraphs": [
+            "Language-model output is validated before it is stored, and what is not known is recorded explicitly instead of being guessed."
+          ]
+        }
+      },
+      {
+        "id": "deterministic-evidence-analysis",
+        "title": "Deterministic evidence analysis",
+        "decision": {
+          "paragraphs": [
+            "Evidence reliability scoring, claim verification, contradiction detection and information-gap detection are plain, unit-tested functions rather than model calls. Reliability is scored for evidence, never for founders, and a contradiction is surfaced for review without any value chosen automatically."
+          ]
+        },
+        "rationale": {
+          "paragraphs": [
+            "The same inputs always give the same, explainable result."
+          ]
+        },
+        "result": {
+          "status": "not-documented",
+          "note": "These modules are implemented and covered by unit tests, but the analyze endpoint does not call them yet."
+        }
+      }
+    ],
+    "implementation": {
+      "paragraphs": [
+        "The analyze endpoint plans focused searches with an OpenAI-backed planner, researches them through Tavily, extracts and structures the founder profile, persists it, enriches it with evidence-linked insights and then runs a LangGraph workflow of sourcing, screening, diligence and decision.",
+        "Separate endpoints expose structuring, enrichment, research planning, decision evaluation, pitch-deck upload and memo narration with ElevenLabs. The workspace has pages for the founder, career, projects, startups, evidence, intelligence, research and the investment memo."
+      ]
+    },
+    "challenges": [
+      {
+        "title": "From local to deployed",
+        "paragraphs": [
+          "The first deployment surfaced container, CORS preflight and gateway-error problems between the Vercel frontend and the Render backend. They were resolved by allowing the deployed frontend origin, logging preflights and search-planner failures, and fixing the failing analyze endpoint."
+        ]
+      }
+    ],
+    "results": {
+      "status": "not-documented",
+      "note": "No outcome metrics are documented. The LangGraph screening and decision nodes currently return placeholder scores and a conservative placeholder recommendation."
+    },
+    "visuals": [
+      {
+        "id": "analysis-pipeline",
+        "kind": "data-flow",
+        "description": "How a free-text query becomes a persisted founder profile.",
+        "nodes": [
+          {
+            "id": "workspace",
+            "label": "React workspace",
+            "responsibility": "Takes the investor's query and shows the profile, evidence and memo"
+          },
+          {
+            "id": "api",
+            "label": "FastAPI service",
+            "responsibility": "Runs the research, extraction, structuring and enrichment stages"
+          },
+          {
+            "id": "research",
+            "label": "Planned search",
+            "responsibility": "OpenAI plans focused queries and Tavily searches the web"
+          },
+          {
+            "id": "models",
+            "label": "OpenAI structuring",
+            "responsibility": "Extracts and structures the founder profile against the schema"
+          },
+          {
+            "id": "store",
+            "label": "MongoDB",
+            "responsibility": "Stores the research run, the structured profile and its enrichment"
+          }
+        ],
+        "connections": [
+          {
+            "from": "workspace",
+            "to": "api",
+            "label": "POST analyze"
+          },
+          {
+            "from": "api",
+            "to": "research",
+            "label": "plan and search"
+          },
+          {
+            "from": "research",
+            "to": "models",
+            "label": "evidence"
+          },
+          {
+            "from": "models",
+            "to": "store",
+            "label": "persist profile"
+          },
+          {
+            "from": "store",
+            "to": "workspace",
+            "label": "profile and insights"
+          }
+        ]
+      }
+    ],
+    "links": [
+      {
+        "kind": "repository",
+        "label": "Source on GitHub",
+        "href": "https://github.com/Abinash-Anand/FounderX"
+      },
+      {
+        "kind": "demo",
+        "label": "FounderX on Vercel",
+        "href": "https://founder-x-beta.vercel.app/"
+      }
+    ]
+  }
+}
